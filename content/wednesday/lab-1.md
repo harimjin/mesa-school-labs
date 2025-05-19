@@ -75,7 +75,7 @@ Finally, think of a way to print out "Case A", "Case B", and "Case C" in the ter
 ## Task 2. Determine mass transfer stability
 In some cases, mass transfer becomes unstable, leading the binary to enter a common-envelope phase. One way to detect this instability is to check the timestep. If the timestep becomes very small (on the order of seconds to minutes), it can be an indication that unstable mass transfer has started.
 
-Use `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Terminate the run when the timestep falls below 30 seconds.
+Use `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Make a code to terminate the run when the timestep falls below 30 seconds, which is enough to capture the unstable mass transfer event, and print "Terminated due to unstable mass transfer" in the terminal. If the mass transfer was stable or there was no mass transfer, the run should end with the printout "Terminated due to core carbon depletion" in the terminal.
 
 <details>
   <summary>Hint</summary>
