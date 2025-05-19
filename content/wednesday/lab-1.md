@@ -1,50 +1,55 @@
-# Introduction
+## Introduction
+Over the past decade, it has become clear that most massive stars are born in binary or multiple-star systems. Throughout their evolution, these stars undergo various interactions that can significantly alter their properties. One such interaction is **mass transfer**, where stars exchange mass and angular momentum. Mass transfer plays a crucial role in producing various stellar phenomena, such as different types of core-collapse supernovae, magnetic stars, X-ray sources, and gravitational wave sources. The nature of these phenomena depends on **when the mass transfer occurs** and whether it is **stable or unstable**. In this lab, we will explore mass transfer across the initial binary parameter space.
 
-In the recent decade, it has become clear that the majority of massive stars are born in binaries or multiple-star systems. Throughout evolution, they will undergo binary interactions that can dramatically change their properties. One of the binary interactions is mass transfer, in which stars exchange mass and angular momentum. Mass transfer is thought to be responsible for various interesting stellar phenomena, such as different types of core-collapse supernovae, magnetic stars, X-ray sources, and gravitational wave sources. These phenomena are dependent on when mass transfer occurs and whether it is stable or unstable. In this lab, we will explore these across the initial binary parameter space.
+## Task 1. Identifying different mass transfer cases
+Mass transfer can be divided into three cases based on the evolutionary phase of the primary star (the initially more massive star) when the transfer occurs. The primary star evolves faster, fills its Roche lobe, and begins transferring mass to the secondary star (the initially less massive star). The three cases are:
+Case A: The primary is doing core hydrogen burning.
+Case B: The primary is doing core helium burning.
+Case C: The primary has depleted core helium.
 
-# Task 1. Identifying different mass transfer cases
-Mass transfer can be divided into three cases, depending on the evolutionary phase of the primary (initially more massive star) when the mass transfer happens. The primary evolves faster and fills its Roche lobe and transfers mass onto the secondary (initially less massive star). 
-Case A is when the primary is doing core hydrogen burning.
-Case B is when the primary is doing core helium burning.
-Case C is when the primary is after core helium depletion.
+We will modify `src/run_binary_extras.f90` to capture different mass transfer cases for a given system with the following initial conditions: 20Msun (initial primary mass) + 12Msun (initial secondary mass) with an initial orbital period of 100 days. When you do a MESA run, do "rn | tee out.txt" to save the terminal output into a file.
 
-We will use these criteria to capture which case of mass transfer occurs in a given system, modifying src/run_binary_extras.f90. This initial system is 20Msun (primary) + 12Msun (secondary) with an initial orbital period of 100 days. When you do a MESA run, do "rn | tee out.txt" to save the terminal output into a file.
+Use the following parameters in the `extras_binary_finish_step` hook in `run_binary_extras.f90`:  
+`b% s1% center_h1` ! Hydrogen mass fraction at the center of the primary  
+`b% s1% center_he4` ! Helium mass fraction at the center of the primary  
+`b% mtransfer_rate` ! Mass transfer rate in g/s
 
-We will use the following parameters in "extras_binary_finish_step" hook in run_binary_extras.f90.
-b% s1% center_h1 ! Hydrogen mass fraction at the center of the primary
-b% s1% center_he4 ! Helium mass fraction at the center of the primary
-b% mtransfer_rate ! Mass transfer rate in g/s
-
-First, think of a condition to capture the mass transfer phase, where the mass transfer rate exceeds 10^-10 Msun/yr.
+The first goal is to capture when mass transfer happens, based on the mass transfer rate exceeding $10^{-10}$ Msun/yr.
 
 <details>
   <summary>Hint 1</summary>
-It is important to check the units of the parameters in MESA. In many cases, it is in cgs units, otherwise noted. b% mtransfer_rate is in g/s. First, let's convert this into the unit of Msun/yr. Variables "secyr" and "Msun" are a year in seconds and a solar mass in grams, respectively, that you can use directly in run_binary_extras.f90.
+  
+It is important to check the units of the parameters in MESA. In many cases, it is in cgs units. ```b% mtransfer_rate``` is in g/s. Use the variables secyr (seconds in a year) and Msun (solar mass in grams) to convert g/s into Msun/yr. You can use the variables directly in ```run_binary_extras.f90```.
 </details>
 
 <details>
-  <summary>Solution</summary>
+  <summary>Solution 1</summary>
+  
+  ```fortran
   b% mtransfer_rate/Msun*secyer > 1d-10
+```
 </details>
 
-Second, think of conditions to capture different burning phases:
+The second goal is to capture different burning phases:
 1. Core hydrogen burning phase
 2. Core helium burning phase
 3. Core helium depletion onwards
 
 <details>
   <summary>Hint 2</summary>
-One can check the mass fractions of elements at the center. Check how core carbon depletion is captured in the "HINT" block. Check whether the mass fractions of hydrogen and helium are above or below 1e-6.
+  
+Check the mass fractions of hydrogen (```b% s1% center_h1```) and helium (```b% s1% center_he4```) to determine the current burning phase. Check how core carbon depletion is captured in the "HINT" block. In the case of hydrogen and helium, check whether the mass fractions of hydrogen and helium are above or below 1e-6.
 </details>
 
 <details>
-  <summary>Solution</summary>
-You can capture the core hydrogen burning phase by "b% s1% center_h1 > 1e-6"
-You can capture the core helium burning phase by "(b% s1% center_he4 > 1e-6) .and. (b% s1% center_h1 < 1e-6)"
-You can capture the phase after core helium depletion by "(b% s1% center_he4 < 1e-6)"
+  <summary>Solution 2</summary>
+  
+Core hydrogen burning phase: ```b% s1% center_h1 > 1e-6```  
+Core helium burning phase: ```(b% s1% center_he4 > 1e-6) .and. (b% s1% center_h1 < 1e-6)```  
+The phase after core helium depletion: ```b% s1% center_he4 < 1e-6```
 </details>
 
-Third, print out "CaseA", "CaseB", and "CaseC" in the terminal, depending on the different burning phases of the primary while mass transfer is happening. 
+Finally, think of a way to print out "Case A", "Case B", and "Case C" in the terminal, depending on the different burning phases of the primary while mass transfer is happening. 
 
 <details>
   <summary>Hint 3</summary>
@@ -52,34 +57,35 @@ Third, print out "CaseA", "CaseB", and "CaseC" in the terminal, depending on the
 </details>
 
 <details>
-  <summary>Solution for Task 1</summary>
+  <summary>Solution 3</summary>
+
+  ```fortran
          !!!!! TASK 1 block begins !!!
-         if ((b% s1% center_h1 > 1d-6) .and. (abs(b% mtransfer_rate/Msun*secyer) > 1d-10)) then
-             write(*,*) '****************** CaseA ******************'
-         else if ((b% s1% center_h1 < 1d-6) .and. (b% s1% center_he4 > 1d-6) .and. (abs(b% mtransfer_rate/Msun*secyer) > 1d-10)) then
-             write(*,*) '****************** CaseB ******************'
-         else if ((b% s1% center_he4 < 1d-6) .and. (abs(b% mtransfer_rate/Msun*secyer) > 1d-10)) then
-             write(*,*) '****************** CaseC ******************'
+         if ((b% s1% center_h1 > 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+             write(*,*) '****************** Case A ******************'
+         else if ((b% s1% center_h1 < 1d-6) .and. (b% s1% center_he4 > 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+             write(*,*) '****************** Case B ******************'
+         else if ((b% s1% center_he4 < 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+             write(*,*) '****************** Case C ******************'
          end if   
          !!!!! TASK 1 block ends !!!
+```
 </details>
 
+## Task 2. Determine mass transfer stability
+In some cases, mass transfer becomes unstable, leading the binary to enter a common-envelope phase. One way to detect this instability is to check the timestep. If the timestep becomes very small (on the order of seconds to minutes), it can be an indication that unstable mass transfer has started.
 
-
-# Task 2. Determine mass transfer stability
-Sometimes, mass transfer becomes unstable as the secondary cannot accrete mass. There can be many ways to capture this, and one approximate way is to check the timestep. If the timestep gets extremely small (an order of seconds to minutes), it sometimes means that mass transfer is unstable. 
-Use timestep 
-b% s1% dt
-When it is less than 40, terminate the evolution.
-
-!!! TASK 2 here
-
-Hint1: 
-Check how to tell MESA to terminate the run in the HINT block.
-
+Use `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Terminate the run when the timestep falls below 30 seconds.
 
 <details>
-  <summary>Solution for Task 2</summary>
+  <summary>Hint</summary>
+  Check how to terminate the MESA run in the "HINT" block.
+</details>
+
+<details>
+  <summary>Solution</summary>
+  
+  ```fortran
          !!!!! TASK 2 block begins !!!
          if (b% s1% dt < 30) then
              write(*,*) '************************************************'
@@ -87,25 +93,29 @@ Check how to tell MESA to terminate the run in the HINT block.
              write(*,*) '************************************************'
              extras_binary_finish_step = terminate
          end if   
-         !!!!! TASK 2 block ends !!!           
+         !!!!! TASK 2 block ends !!!
+```       
 </details>
- 
 
+## Task 3. Run a model with random initial binary parameters
+Now, we will explore different mass transfer cases and their stability across the initial binary parameter space. We will fix an initial primary mass to 20 Msun. Choose a random initial secondary mass from 1 to 19 Msun and an initial orbital period from 1 to 3000 days, and run the model.
 
+Observe the terminal output to check the case of the mass transfer when mass transfer begins (this is because Case A is always followed by Case B). If you missed it, you can do "grep -ir Case out.txt" to print out the occurrences of the string "Case" from the out.txt file.
 
-Task 3. Run a model with random 
-We will consider a primary mass of 20 Msun. 
-First mass transfer case
-Case A is followed with Case B
-Initial secondary mass from 1 to 19 Msun
-Initial orbital period in days 1 to 3000 days
-
-"grep -ir Case out.txt" to print out the occurrences.
-
-Enter your result "Initial mass ratio (M2/M1)", "Initial orbital period in days", "Case", "Stable mass transfer?" in the following Google spreadsheet. If there was no mass transfer, leave "Case" and "Stable mass transfer" as blanks.
+Record your results in the following Google Spreadsheet:
 https://docs.google.com/spreadsheets/d/1HLwsGPu6w3t2NMUcdVYvkHFvqgIOUDkigfrZruN6Uo8/edit?usp=sharing
-(Additional task: if you have many cores, you can perhaps try evolving both stars, download this file: and run.)
+
+Parameters to Enter:  
+**Initial mass ratio (M2/M1)**: A value between 0.05 and 0.95.  
+**Initial orbital period**: A value between 1 and 3000 days.  
+**Case**: One of A, B, or C.  
+**Stable**: Enter y for stable mass transfer or n if terminated due to unstable mass transfer.  
+If there was no mass transfer, leave **Case** and **Stable** blank.  
+
+As many students input values, a pattern will emerge in the initial orbital period-mass ratio diagram. What kind of patterns do you see? Why do you think such patterns arise? Discuss with your group members.
 
 
-Acknowledgement: the MESA input files 
+<br><br><br><br>
+### Acknowledgement
+The MESA input files were built upon the following resource:  
 https://wwwmpa.mpa-garching.mpg.de/~jklencki/html/massive_binaries.html
