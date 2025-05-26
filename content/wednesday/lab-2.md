@@ -1,4 +1,4 @@
-# Common Envelope with MESA
+# Common Envelope evolution with MESA
 
 # General ideas
 
@@ -41,57 +41,58 @@ Additionally, we use a Gaussian weighting kernel $\propto \exp[-(\Delta r/R_\mat
 
 # Tasks for students
 
-1. **Check out the `run-star-extras.f90` file**: Have a close look at the `run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
-
-{{< details title="Hint" closed="true" >}}
-Have a close look at lines xx-yy and lines xx-yy.
-{{< /details >}}
+1. **Check out the `run-star-extras.f90` file**: Please download the provided MESA directory from [here](/wednesday/lab2_part2.zip). This inlcudes may file, most of which you can ignore for now. Have a close look at the `src/run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
 
 {{< details title="Solution" closed="true" >}}
-The drag force is calculated in lines XX and the orbital separation is updated in line xx. We are making use of the `s% xtra(i)` variables in the star pointer. These are particularly handy as we do not have to worry about things going wrong, if MESA decides to do a `retry`.
+The drag force is calculated in lines 339 and the orbital separation is updated in line 345. We are making use of the `xtra(i)` variables in the `star_info` pointer. These are particularly handy as we do not have to worry about things going wrong, if MESA decides to do a `retry`.
+
+All of the heating is done in the `CE_heating` function at the end of the file.
 {{< /details >}}
 
 
-2. **Run the CE model**: Run the CE model with the provided `inlist` file. You are provided with a $12\,\mathrm{M}_\odot$ red supergiant donor (from the `12M_pre_ms_to_core_collapse` test suite) and a $1.4\,\mathrm{M}_\odot$ companion star (could be a neutron star). Have a look at how the orbital separation changes over time. You can use the [MESA explorer](https://billwolf.space/mesa-explorer/) to visualize `separation` vs `star_age`.
+1. **Run the CE model**: Run the CE model with the provided `inlist` file. You are provided with a $12\,\mathrm{M}_\odot$ red supergiant model (from the `12M_pre_ms_to_core_collapse` test suite) and a $1.4\,\mathrm{M}_\odot$ companion star (could be a neutron star). Everything is already implemented as described above. You can ignore all the inlists expect for `inlist_CE`. The other inlists are taken from the test suite and not modified. So you really just have to do `./mk && ./rn`. Have a look at how the orbital separation changes over time. The orbital separation is directly printed to the terminal but also saved to the `history.log` as `separation`. Use the [MESA explorer](https://billwolf.space/mesa-explorer/) to visualize `separation` vs `star_age` (you need to upload your `history.log`file).
 
 {{< details title="Solution" closed="true" >}}
-The orbital separation is xx after 2 years of CE evolution.
+The orbital separation is $\sim 40.7 \, {\rm R}_\odot$ after 2 years of CE evolution.
 {{< /details >}}
 
-3. **Change the compansion mass**: Try to run the same donor star setup but vary the mass of the companion star. What happens if you increase the mass of the companion star? What happens if you decrease it? How does this affect the orbital separation? We have tested the cases for $ 0.5\,\mathrm{M}_\odot \leq M_2 \leq 2.0\,\mathrm{M}_\odot$. Depending on the companion mass, you might need to adjust the stopping criterion in the `inlist_CE` file.
+3. **Change the companion mass**: Run the same setup but vary the mass of the companion star. What happens if you increase the mass of the companion star? What happens if you decrease it? How does this affect the orbital separation? We have tested the cases for $ 0.5\,\mathrm{M}_\odot \leq M_2 \leq 2.0\,\mathrm{M}_\odot$. Depending on the companion mass, you might need to adjust the stopping criterion in the `inlist_CE` file.
 
 {{< details title="Hint" closed="true" >}}
 Have a close look at the `inlist_CE` file. Try to spot the `x_ctrl` variable that corresponds to the companion mass.
 {{< /details >}}
 
 {{< details title="Solution" closed="true" >}}
-For more massive companions, the orbital separations is higher. When visualizing the orbital evolution over time, the more massive companion plunges in faster compared to less massive companion. 
+For more massive companions, the orbital separation is larger. When visualizing the orbital evolution over time, the more massive companion plunges in faster compared to less massive companion. 
 {{< /details >}}
 
-1. **(Bonus task) Mondify the drag force**: The current implementation of the drag force is based on the assumption that the companion star is moving on a straight through a uniform density background. This is not the case in a CE phase. In a more realistic scenario, the drag force may be weaker. Implement a free parameter in the drag force calculation that allows you to scale the drag force by a factor $C_\mathrm{drag}$. Implement it such that you can control this factor from the `inlist_CE` file. What happens if you set $C_\mathrm{drag} = 0.5$? Is this what you expected? 
-
-<details>
-<summary>Hint</summary>
-
-</details>
-
-<details>
-<summary>Solution</summary>
-
-</details>
+4. **(Bonus task) Modify the drag force**: The current implementation of the drag force is based on the assumption that the companion star is moving on a straight path through a uniform density background. This is not the case during the CE phase. In a more realistic scenario, the drag force may be weaker. Implement a free parameter in the drag force calculation that allows you to scale the drag force by a factor $C_\mathrm{drag}$. Implement it such that you can control this factor from the `inlist_CE` file. What happens if you set $C_\mathrm{drag} = 0.5$? Is this what you expected? 
 
 {{< details title="Hint" closed="true" >}}
-You might want to define a `x_ctrl` varable in the `inlist_CE` file that you can as a global prefactor for the drag force. Try to locate the line where the drag force in computed in the `run_star_extras.f90`.
+You might want to define a `x_ctrl` variable in the `inlist_CE` file that you can use a global pre-factor for the drag force. Try to locate the line where the drag force in computed in the `run_star_extras.f90`.
 {{< /details >}}
 
 {{< details title="Solution" closed="true" >}}
-Add the following line to the `inlist_CE` file:
+Update the `inlist_CE` file like this:
+```fortran
+&controls
+    ...
+      x_ctrl(10) = 1.0d0  ! drag factor parameter
+    ...
+/ ! end of controls namelist
+```
+
+Then update the `run_star_extras.f90` as follows:
 ```fortran
 Fdrag = s% x_ctrl(7) *  4*pi*rho_r*(G * M2 / vrel)**2 * I
 ```
+You can find a full implementation ==here==.
+
+For $C_\mathrm{d}<1$ the plunge-in takes longer and the separation afterwards is a little larger. This is expected as the drag force is generally weaker.
+
 {{< /details >}}
 
-5. **(Bonus task) Modify the drag force prescription**: Let's exteend the drag force prescription to include the density gradient of the envelope. Implement the drag force prescription from [MacLeod & Ramirez-Ruiz (2015)](https://doi.org/10.1088/0004-637X/803/1/41) in the `run-star-extras.f90` file. This prescirption is only valid for supersonic motion. Smoothly interpolate between the two regimes for $0.95 < \mathcal{M} < 1.05$. 
+1. **(Bonus task) Modify the drag force prescription**: Let's extend the drag force prescription to include the density gradient of the envelope. Implement the drag force prescription from [MacLeod & Ramirez-Ruiz (2015)](https://doi.org/10.1088/0004-637X/803/1/41) in the `run-star-extras.f90` file. This prescription is only valid for supersonic motion. Implement this drag force prescription into the `run_star_extras.f90`.
 
 {{< details title="Hint" closed="true" >}}
 {{< /details >}}
