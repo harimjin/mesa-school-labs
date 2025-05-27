@@ -1,6 +1,6 @@
-# Common Envelope evolution with MESA
+# Part 2: Common Envelope evolution with MESA
 
-# General ideas
+## General ideas
 
 In this part of the lab, we explore how we can model the common envelope (CE) phase of binary stars using MESA. We use MESA's single star module `star` to evolve the donor star. The effect of the companion star is modeled by using several `other_*`-hooks in the `run-star-extras.f90` file.
 
@@ -39,9 +39,9 @@ $$
 Additionally, we use a Gaussian weighting kernel $\propto \exp[-(\Delta r/R_\mathrm{a})]$ to have a smooth heating profile, where $\Delta r = |r - a|$.
 
 
-# Tasks for students
+## Tasks for students
 
-1. **Check out the `run-star-extras.f90` file**: Please download the provided MESA directory from [here](/wednesday/lab2_part2.zip). This inlcudes may file, most of which you can ignore for now. Have a close look at the `src/run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
+1. **Check out the `run-star-extras.f90` file**: Please download the provided MESA directory from [here](../../static/wednesday/lab2_part2.zip). This inlcudes may file, most of which you can ignore for now. Have a close look at the `src/run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
 
 {{< details title="Solution" closed="true" >}}
 The drag force is calculated in lines 339 and the orbital separation is updated in line 345. We are making use of the `xtra(i)` variables in the `star_info` pointer. These are particularly handy as we do not have to worry about things going wrong, if MESA decides to do a `retry`.
