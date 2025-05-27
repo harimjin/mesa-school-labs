@@ -100,9 +100,8 @@ and the `&controls` section:
 
 To see if all runs well, run your new model! (`./rn`).
 
-<details>
-  <summary> ***Solution*** </summary>
-  
+{{< details title="Solution" closed="true" >}}
+
 ```fortran
 &binary_job
 
@@ -140,7 +139,7 @@ To see if all runs well, run your new model! (`./rn`).
 / ! end of binary_controls namelist
 
 ```
-</details>
+{{< /details >}}
 
 <!-- ### Solution `inlist_project` -->
 
@@ -262,9 +261,8 @@ $$M_{\mathrm{chirp}} = \frac{(m_1 m_2)^{3/5}}{(m_1 + m_2)^{1/5}}$$
 >
 > **Remember** that MESA lib gives b% m(1) and b% m(2) in grams and b% period in seconds. Constants, such as $G \equiv $ `standard_cgrav` are in cgs. If you want to use the MESA-computed constants, remember to import the `const_def` module at the beginning of the `run_binary_extras.f90`.
 
-<details>
-  <summary>***Solution***</summary>
-  
+{{< details title="Solution" closed="true" >}}
+
 ```fortran
     ! Chirp mass
     mchirp = ((b% m(1) * b% m(2))**(3.0d0 / 5.0d0)) / ((b% m(1) + b% m(2))**(1.0d0 / 5.0d0))
@@ -279,13 +277,13 @@ $$M_{\mathrm{chirp}} = \frac{(m_1 m_2)^{3/5}}{(m_1 + m_2)^{1/5}}$$
     ! write(*,*) 'Chirp mass [g]     = ', mchirp
     write(*,*) 'Merger time [Gyr]  = ', t_merge_gyr
 ```
-</details>
+
+{{< /details >}}
 
 To apply all the changes you have made in your `run_binary_extras.f90` you need to compile and run your model (`./mk && ./rn`)!
 
-<details>
-  <summary>***Solution***</summary>
-  
+{{< details title="Solution" closed="true" >}}
+
 ```fortran
       ! returns either keep_going or terminate.
       ! note: cannot request retry; extras_check_model can do that.
@@ -325,7 +323,8 @@ To apply all the changes you have made in your `run_binary_extras.f90` you need 
 
       end function extras_binary_finish_step
 ```
-</details>
+
+{{< /details >}}
 
 <!-- ### Solution `run_binary_extras.f90`
 
@@ -409,15 +408,14 @@ The participants should split into gropus that will be assigned a value of `mass
 
 As the model fitting within Cyg X-1 determined parameters is right on the onset of mass transfer, let us comment out the previously applied stopping criterion from the `run_binary_extras.f90` to let the system evolve a bit further. This time, let us choose the stopping criterion based on the minimum mass of the donor set to $23\,\mathrm{M_\odot}$.
 
-<details>
-  <summary>***Solution***</summary>
+{{< details title="Solution" closed="true" >}}
   
 ```fortran
       ! stop when mass drops below this limit
       star_mass_min_limit = 23.0d0
 ```
-</details>
 
+{{< /details >}}
 
 To make the runs a bit faster, reduce the resolution to
 
