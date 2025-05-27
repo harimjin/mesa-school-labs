@@ -39,9 +39,9 @@ $$
 Additionally, we use a Gaussian weighting kernel $\propto \exp[-(\Delta r/R_\mathrm{a})]$ to have a smooth heating profile, where $\Delta r = |r - a|$.
 
 
-## Tasks for students
+## Tasks
 
-1. **Check out the `run-star-extras.f90` file**: Please download the provided MESA directory from [here](../../static/wednesday/lab2_part2.zip). This inlcudes may file, most of which you can ignore for now. Have a close look at the `src/run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
+1. **Check out the `run-star-extras.f90` file**: Please download the provided MESA directory from [here](../../static/wednesday/lab2_part2.zip). This includes many files, most of which you can ignore for now. Have a close look at the `src/run-star-extras.f90` file, especially the `other_energy` hook and the `extras_finish_step` function. Try to understand how the drag force is calculated and how it is used to update the orbital separation.
 
 {{< details title="Solution" closed="true" >}}
 The drag force is calculated in lines 339 and the orbital separation is updated in line 345. We are making use of the `xtra(i)` variables in the `star_info` pointer. These are particularly handy as we do not have to worry about things going wrong, if MESA decides to do a `retry`.
@@ -50,7 +50,7 @@ All of the heating is done in the `CE_heating` function at the end of the file.
 {{< /details >}}
 
 
-1. **Run the CE model**: Run the CE model with the provided `inlist` file. You are provided with a $12\,\mathrm{M}_\odot$ red supergiant model (from the `12M_pre_ms_to_core_collapse` test suite) and a $1.4\,\mathrm{M}_\odot$ companion star (could be a neutron star). Everything is already implemented as described above. You can ignore all the inlists expect for `inlist_CE`. The other inlists are taken from the test suite and not modified. So you really just have to do `./mk && ./rn`. Have a look at how the orbital separation changes over time. The orbital separation is directly printed to the terminal but also saved to the `history.log` as `separation`. Use the [MESA explorer](https://billwolf.space/mesa-explorer/) to visualize `separation` vs `star_age` (you need to upload your `history.log`file).
+2. **Run the CE model**: Run the CE model with the provided `inlist` file. You are provided with a $12\,\mathrm{M}_\odot$ red supergiant model (from the `12M_pre_ms_to_core_collapse` test suite) and a $1.4\,\mathrm{M}_\odot$ companion star (could be a neutron star). Everything is already implemented as described above. You can ignore all the inlists expect for `inlist_CE`. The other inlists are taken from the test suite and not modified. So you really just have to do `./mk && ./rn`. Have a look at how the orbital separation changes over time and try to identify the different phases. The orbital separation is directly printed to the terminal but also saved to the `history.log` as `separation`. Use the [MESA explorer](https://billwolf.space/mesa-explorer/) to visualize `separation` vs `star_age` (you need to upload your `history.log`file).
 
 {{< details title="Solution" closed="true" >}}
 The orbital separation is $\sim 40.7 \, {\rm R}_\odot$ after 2 years of CE evolution.
@@ -63,57 +63,121 @@ Have a close look at the `inlist_CE` file. Try to spot the `x_ctrl` variable tha
 {{< /details >}}
 
 {{< details title="Solution" closed="true" >}}
-For more massive companions, the orbital separation is larger. When visualizing the orbital evolution over time, the more massive companion plunges in faster compared to less massive companion. 
+The variable `x_ctrl(1)` in `inlist_CE` determines the mass of the companion. For more massive companions, the orbital separation is larger. When visualizing the orbital evolution over time, the more massive companion plunges in faster compared to less massive companion. 
 {{< /details >}}
 
-4. **(Bonus task) Modify the drag force**: The current implementation of the drag force is based on the assumption that the companion star is moving on a straight path through a uniform density background. This is not the case during the CE phase. In a more realistic scenario, the drag force may be weaker. Implement a free parameter in the drag force calculation that allows you to scale the drag force by a factor $C_\mathrm{drag}$. Implement it such that you can control this factor from the `inlist_CE` file. What happens if you set $C_\mathrm{drag} = 0.5$? Is this what you expected? 
+> **(Bonus task) Modify the drag force**: The current implementation of the drag force is based on the assumption that the companion star is moving on a straight path through a uniform density background. This is not the case during the CE phase. In a more realistic scenario, the drag force may be weaker. Implement a free parameter in the drag force calculation that allows you to scale the drag force by a factor $C_\mathrm{drag}$. Implement it such that you can control this factor from the `inlist_CE` file. What happens if you set $C_\mathrm{drag} = 0.5$? Is this what you expected? 
+> 
+> {{< details title="Hint" closed="true" >}}
+> You might want to define a `x_ctrl` variable in the `inlist_CE` file that you can use a global pre-factor for the drag force. Try to locate the line where the drag force in computed in the `run_star_extras.f90`. And don't forget to run `./mk` after modifying the `run_star_extras.f90` file.
+> {{< /details >}}
+> 
+> {{< details title="Solution" closed="true" >}}
+> Update the `inlist_CE` file like this:
+> ```fortran
+> &controls
+>     ...
+>       x_ctrl(5) = 1.0d0  ! drag force parameter
+>     ...
+> / ! end of controls namelist
+> ```
+> 
+> Then update the `run_star_extras.f90` as follows:
+> ```fortran
+> Fdrag = s% x_ctrl(5) *  4*pi*rho_r*(G * M2 / vrel)**2 * I
+> ```
+> You can find a full implementation ==here==.
+> 
+> For $C_\mathrm{d}<1$ the plunge-in takes longer and the separation afterwards is a little larger. This is expected as the drag force is generally weaker. For $C_\mathrm{d} = 0.5$, the orbital separation after two years of CE evolution is $\sim 56.6\,\mathrm{R}_\odot$.
+> {{< /details >}}
+> 
+> 1. **(Bonus task) Modify the drag force prescription**: Let's extend the drag force prescription to include the density gradient of the envelope. Implement the drag force prescription from [MacLeod & Ramirez-Ruiz (2015)](https://doi.org/10.1088/0004-637X/803/1/41) in the `run-star-extras.f90` file. The drag force is given by
+> $$
+> F_\mathrm{drag} = \pi R_\mathrm{a}^2 v_\mathrm{rel}^2\rho(c_1 + c_2 \epsilon_\rho +
+>  c_3 \epsilon_\rho^2)
+> $$
+> with $\epsilon_\rho = H_P/R_\mathrm{a}$ the ratio of the local pressure scale hight and the accretion radius. The pre-factors are $c_i = (1.91791946, −1.52814698, 0.75992092)$. This prescription is only valid for supersonic motion. FOr subsonic motion, we will stick to the current implementation. Try to implement it such that there is a smooth transition for $0.9 < \mathcal{M} < 1.1$ between the regimes.
+> 
+> {{< details title="Hint 1" closed="true" >}}
+> You need to get the local pressure scale hight. This is stored in the `star-info` pointer. Have a look at `$MESA_DIR/star_data/public/star_data_step_work.inc` and try to find the correct name for it. IF you cannot find it, have a look at hint 2.
+> {{< /details >}}
+> 
+> {{< details title="Hint 2" closed="true" >}}
+> The pressure scale height is called `scale_height`.
+> {{< /details >}}
+> 
+> {{< details title="Hint 2" closed="true" >}}
+> For a smooth transition for $0.9 < \mathcal{M} < 1.1$ you can define an auxiliary variable $\alpha = \frac{\mathcal{M} - 0.9}{1.1-0.9}$. Then the drag force in the transition region is given by
+> $$
+> F_\mathrm{drag} = \alpha F_\mathrm{drag}^\mathrm{MacLeod} + (1 - \alpha)F_\mathrm{drag}^\mathrm{Ostriker}
+> $$
+> {{< /details >}}
+> 
+> 
+> {{< details title="Solution" closed="true" >}}
+> One possible implementation could look like this
+> ```fortran
+>          G = standard_cgrav
+>          M2 = s% xtra(1)  
+>          a = s% xtra(2)
+>          r_min = s% xtra(3)
+>          do k=1, s% nz
+>             if (s% r(k) < a) then
+>                M_r = s% m(k)
+>                rho_r = s% rho(k)
+>                cs_r = s% csound(k)
+>                omega_r = s% omega(k)
+>                H_P_r = s% scale_height(k)
+>                exit
+>             end if
+>          end do
+>          vorb = sqrt(G*(M_r + M2)/a)
+>          vrel = vorb - omega_r * a
+>          Eorb = -G*M_r*M2/(2*a)
+>          Mach_r = vrel / cs_r
+>          Ra = 2.0d0 * G * M2 / vrel**2
+> 
+>          ! compute the drag force
+>          ! first, get Ostriker (1999) because needed for both implementations
+>          if (Mach_r < 1.0d0) then
+>             I = 0.5d0 * log((1.0d0 + Mach_r) / (1.d0 - Mach_r)) - Mach_r
+>          else
+>             I = 0.5d0 * log( 1.0d0 - 1.0d0/Mach_r**2) + log(2*a / r_min)
+>          end if
+>          Fdrag_Ost = 4*pi*rho_r*(G * M2 / vrel)**2 * I
+> 
+>          if (s% x_logical_ctrl(1)) then
+>             ! use  MacLeod & Ramirez-Ruiz (2015)
+>             eps_rho = H_P_r / Ra 
+>             f_mod = 1.91791946 - 1.52814698 * eps_rho + 0.75992092 * eps_rho**2
+>             Fdrag_Mac = pi * Ra**2 * vrel**2 * rho_r * f_mod
+> 
+>             ! do smooth transition between the two
+>             if (Mach_r < 0.9d0) then
+>                Fdrag = Fdrag_Ost
+>             else if (Mach_r > 1.1d0) then
+>                Fdrag = Fdrag_Mac
+>             else
+>                alpha = (Mach_r - 0.9d0) / (1.1d0 - 0.9d0)
+>                Fdrag = (1.0d0 - alpha) * Fdrag_Ost + alpha * Fdrag_Mac
+>             end if
+>          else
+>             ! use Ostriker (1999) only
+>             Fdrag = Fdrag_Ost
+>          end if
+> 
+>          Fdrag = Fdrag * s% x_ctrl(5)  ! scale by the user-defined factor
+> ```
+> For the full implementation, see ==here==.
+>
+> Now, the drag force in the supersonic regime is much weaker. Therefore, the plunge-in takes longer. The orbital separation after 2 years of CE is $\sim 73.6~\mathrm{R}_\odot$
+> {{< /details >}}
 
-{{< details title="Hint" closed="true" >}}
-You might want to define a `x_ctrl` variable in the `inlist_CE` file that you can use a global pre-factor for the drag force. Try to locate the line where the drag force in computed in the `run_star_extras.f90`.
-{{< /details >}}
-
-{{< details title="Solution" closed="true" >}}
-Update the `inlist_CE` file like this:
-```fortran
-&controls
-    ...
-      x_ctrl(10) = 1.0d0  ! drag factor parameter
-    ...
-/ ! end of controls namelist
-```
-
-Then update the `run_star_extras.f90` as follows:
-```fortran
-Fdrag = s% x_ctrl(7) *  4*pi*rho_r*(G * M2 / vrel)**2 * I
-```
-You can find a full implementation ==here==.
-
-For $C_\mathrm{d}<1$ the plunge-in takes longer and the separation afterwards is a little larger. This is expected as the drag force is generally weaker.
-
-{{< /details >}}
-
-1. **(Bonus task) Modify the drag force prescription**: Let's extend the drag force prescription to include the density gradient of the envelope. Implement the drag force prescription from [MacLeod & Ramirez-Ruiz (2015)](https://doi.org/10.1088/0004-637X/803/1/41) in the `run-star-extras.f90` file. This prescription is only valid for supersonic motion. Implement this drag force prescription into the `run_star_extras.f90`.
-
-{{< details title="Hint" closed="true" >}}
-{{< /details >}}
-
-{{< details title="Solution" closed="true" >}}
-{{< /details >}}
-
-1. **(Bonus task) Implement common envelope ejection**: The current implementation of the CE phase does not allow for mass loss. In this task, you wil implement a mass loss prescription to follow the dynamical mass ejection in the CE phase.
 
 
-{{< details title="Hint" closed="true" >}}
-{{< /details >}}
-
-{{< details title="Solution" closed="true" >}}
-{{< /details >}}
-
-
-# Note on assumptions, limitations and points to improve
-- CE is not point-symmetric (not 1D)
-- such simulations are only valid for low mass ratios, i.e., $M_2/M_1 \ll 1$
+ **Note on assumptions, limitations and points to improve**
+- CE is not point-symmetric (not 1D), only valid for low mass ratios, i.e., $M_2/M_1 \ll 1$
 - drag force only valid of straight line motion uniform density background
-- there exist other drag force prescriptions that take the density gradient into account ([MacLeod & Ramirez-Ruiz 2015](https://doi.org/10.1088/0004-637X/803/1/41)) or circular motion ([Kim & Kim 2007](https://doi.org/10.1086/519302))
+- there exist other drag force prescriptions that take the circular motion into account (e.g. [Kim & Kim 2007](https://doi.org/10.1086/519302))
 - no mass loss in this CE simulation, therefore no mass CE ejection possibility
 - no angular momentum transfer from companion to envelope
