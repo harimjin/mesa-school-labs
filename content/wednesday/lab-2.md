@@ -285,19 +285,12 @@ To apply all the changes you have made in your `run_binary_extras.f90` you need 
 {{< details title="Solution" closed="true" >}}
 
 ```fortran
-      ! returns either keep_going or terminate.
-      ! note: cannot request retry; extras_check_model can do that.
       integer function extras_binary_finish_step(binary_id)
          type (binary_info), pointer :: b
          integer, intent(in) :: binary_id
          integer :: ierr
 
-         ! Spectroscopic observations:
-         !     Teff  = 28500 +/- 1000 K
-         !     log_L = 5.5 +/- 0.1 Lsun
-         !     log_g = 3.2 +/- 0.1
-         real(dp), parameter ::  Teff_obs = 28500.0d0,  logL_obs = 5.5d0,  logg_obs = 3.2d0
-         real(dp), parameter :: dTeff_obs =  1000.0d0, dlogL_obs = 0.1d0, dlogg_obs = 0.1d0
+         double precision :: mchirp, t_merge, t_merge_gyr
 
          call binary_ptr(binary_id, b, ierr)
          if (ierr /= 0) then ! failure in  binary_ptr
@@ -305,16 +298,44 @@ To apply all the changes you have made in your `run_binary_extras.f90` you need 
          end if  
          extras_binary_finish_step = keep_going
          
-         ! optional value printing
          write(*,*) 'Teff = ', b% s1% Teff, 'logL = ', log10(b% s1% photosphere_L), 'logg = ', b% s1% photosphere_logg
          write(*,*) 'f_RL = ', b% r(1)/b% rl(1)
 
+
+         chi2_value = chi2(b% s1% Teff, log10(b% s1% photosphere_L), b% s1% photosphere_logg, &
+                         Teff_obs, logL_obs, logg_obs, &
+                         dTeff_obs, dlogL_obs, dlogg_obs)
+         
+         write(*,*) 'Chi2 from the previous step:',chi2_value_old
+         write(*,*) 'Chi2:', chi2_value
       
       
-         ! Apply stopping condition
+         ! Spectroscopic observations:
+         !     Teff  = 28500 +/- 1000 K
+         !     log_L = 5.5 +/- 0.1 Lsun
+         !     log_g = 3.2 +/- 0.1
          if ( abs(b% s1% Teff - Teff_obs) < dTeff_obs .and. &
               abs(log10(b% s1% photosphere_L) - logL_obs) < dlogL_obs .and. &
-              abs(b% s1% photosphere_logg - logg_obs) < dlogg_obs) then
+              abs(b% s1% photosphere_logg - logg_obs) < dlogg_obs .and. &
+              chi2_value > chi2_value_old) then
+
+
+            ! Now that we have the quasi-best fitting model, let's compute merger time due to GW emission, based on Peters 1964
+            !     From MESA lib: b% m(1) and b% m(2) are in grams, b% period is in seconds,
+            !     const_def gives Msun, clight and standard_cgrav in cgs
+
+            ! Chirp mass
+            mchirp = ((b% m(1) * b% m(2))**(3.0d0 / 5.0d0)) / ((b% m(1) + b% m(2))**(1.0d0 / 5.0d0))
+
+            ! t_merge in seconds
+            t_merge = (5.0d0 / 256.0d0) * (clight**5 / standard_cgrav**(5.0d0 / 3.0d0)) * &
+                      ((b% period / (2.0d0 * pi))**(8.0d0 / 3.0d0)) * mchirp**(-5.0d0 / 3.0d0)
+
+            ! seconds to Gyr
+            t_merge_gyr = t_merge / (3600.0d0 * 24.0d0 * 365.25d0 * 1.0d9)
+
+            ! write(*,*) 'Chirp mass [g]     = ', mchirp
+            write(*,*) 'Merger time [Gyr]  = ', t_merge_gyr
 
             write(*,*) "Found a model maching the observations. Terminating"
             extras_binary_finish_step = terminate
