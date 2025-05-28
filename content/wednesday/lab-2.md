@@ -240,7 +240,7 @@ Go ahead and add a stopping criterion `extras_binary_finish_step = terminate` in
 
 We will need that model in the subsequent runs! -->
 
-### Grawitational waves radiation and merge time
+### Gravitational waves radiation and merge time
 
 Once we are all set to run our model, we can add one extra tweak to our computations. As we assumed the loss of angular momentum via gravitational waves radiation in our model (the `do_jdot_gr` control), we can compute the approximate time our binary will take to merge.
 
