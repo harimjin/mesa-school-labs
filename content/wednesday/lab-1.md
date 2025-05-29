@@ -3,9 +3,9 @@ Over the past decade, it has become clear that most massive stars are born in bi
 
 ## Task 1. Identifying different mass transfer cases
 Mass transfer can be divided into three cases based on the evolutionary phase of the primary star (the initially more massive star) when the transfer occurs. The primary star evolves faster, fills its Roche lobe, and begins transferring mass to the secondary star (the initially less massive star). The three cases are:
-Case A: The primary is doing core hydrogen burning.
-Case B: The primary is doing core helium burning.
-Case C: The primary has depleted core helium.
+Case A: The primary is undergoing core hydrogen burning.
+Case B: The primary is undergoing core helium burning.
+Case C: The primary has reached the end of core helium burning (also called core helium depletion).
 
 We will modify `src/run_binary_extras.f90` to capture different mass transfer cases for a given system with the following initial conditions: 20Msun (initial primary mass) + 12Msun (initial secondary mass) with an initial orbital period of 100 days. When you do a MESA run, do "rn | tee out.txt" to save the terminal output into a file.
 
@@ -84,9 +84,9 @@ initial_period_in_days = 5
 What do you see in the screen output? Can you identify which parameter is changing?  
 ***
 
-One way to detect this instability is to check the timestep. If the timestep becomes very small (on the order of seconds to minutes), it can be an indication that unstable mass transfer has started.
+One way to detect this instability is to check the mass transfer rate and the timestep. If the mass transfer rate is high and the timestep becomes very small (on the order of seconds to minutes), it is an indication that unstable mass transfer has started.
 
-Use `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Make a code to terminate the run when the timestep falls below 30 seconds, which is enough to capture the unstable mass transfer event, and print "Terminated due to unstable mass transfer" in the terminal. If the mass transfer was stable or there was no mass transfer, the run should end with the printout "Terminated due to core carbon depletion" in the terminal.
+Use `b% s1% lg_mtransfer_rate` and `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Make a code to terminate the run when the timestep falls below 30 seconds, which is enough to capture the unstable mass transfer event, and print "Terminated due to unstable mass transfer" in the terminal. If the mass transfer was stable or there was no mass transfer, the run should end with the printout "Terminated due to core carbon depletion" in the terminal.
 
 <details>
   <summary>Hint</summary>
@@ -125,6 +125,10 @@ If there was no mass transfer, leave **Case** and **Stable** blank.
 
 As many students input values, a pattern will emerge in the initial orbital period-mass ratio diagram. What kind of patterns do you see? Why do you think such patterns arise? Discuss with your group members.
 
+# Task 4 (optional): Visualizing the effect of binary evolution with TULIPS
+We can look at the outcome of binary evolution in more detail by visualizing our simulation results with TULIPS, a Python package for stellar evolution visualization. We will create movies of the changes in the properties of the donor and accretor in the binary system you simulated. For this exercise, you will need to upload the contents of your `LOGS1` and `LOGS2` output directories into this [Google Collab notebook](https://colab.research.google.com/drive/1tkEXYIyOM7sWmnKZu4Ds1I235lnZHD7i?usp=sharing).
+
+Solutions can be found [here](https://drive.google.com/file/d/16T7aNaNFX93XDUfASpI-iFezYln4fTsv/view?usp=sharing).
 
 <br><br><br><br>
 ### Acknowledgement
