@@ -72,6 +72,7 @@ Finally, think of a way to print out "Case A", "Case B", and "Case C" in the ter
 ```
 </details>
 
+
 ## Task 2. Determine mass transfer stability
 In some cases, mass transfer becomes unstable, leading the binary to enter a common-envelope phase. 
 
@@ -125,6 +126,13 @@ Parameters to Enter:
 If there was no mass transfer, leave **Case** and **Stable** blank.  
 
 As many students input values, a pattern will emerge in the initial orbital period-mass ratio diagram. What kind of patterns do you see? Why do you think such patterns arise? Discuss with your group members.
+
+
+***
+**Bonus exercise:**  
+Can you print out which mass transfer cases a binary system undergoes throughout its evolution at the end of the run?  
+Try to capture all the cases. Ex) Case A mass transfer is generally followed by Case B mass transfer. In this case, we want to print out "Case A + B" at termination.
+***
 
 # Task 4 (optional): Visualizing the effect of binary evolution with TULIPS
 We can look at the outcome of binary evolution in more detail by visualizing our simulation results with TULIPS, a Python package for stellar evolution visualization. We will create movies of the changes in the properties of the donor and accretor in the binary system you simulated. For this exercise, you will need to upload the contents of your `LOGS1` and `LOGS2` output directories into this [Google Collab notebook](https://colab.research.google.com/drive/1tkEXYIyOM7sWmnKZu4Ds1I235lnZHD7i?usp=sharing).
