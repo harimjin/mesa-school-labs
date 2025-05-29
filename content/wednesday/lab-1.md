@@ -61,11 +61,11 @@ Finally, think of a way to print out "Case A", "Case B", and "Case C" in the ter
 
   ```fortran
          !!!!! TASK 1 block begins !!!
-         if ((b% s1% center_h1 > 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+         if ((b% s1% center_h1 > 1d-6) .and. (abs(b% mtransfer_rate)/Msun*secyer > 1d-10)) then
              write(*,*) '****************** Case A ******************'
-         else if ((b% s1% center_h1 < 1d-6) .and. (b% s1% center_he4 > 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+         else if ((b% s1% center_h1 < 1d-6) .and. (b% s1% center_he4 > 1d-6) .and. (abs(b% mtransfer_rate)/Msun*secyer > 1d-10)) then
              write(*,*) '****************** Case B ******************'
-         else if ((b% s1% center_he4 < 1d-6) .and. (b% mtransfer_rate/Msun*secyer > 1d-10)) then
+         else if ((b% s1% center_he4 < 1d-6) .and. (abs(b% mtransfer_rate)/Msun*secyer > 1d-10)) then
              write(*,*) '****************** Case C ******************'
          end if   
          !!!!! TASK 1 block ends !!!
@@ -86,7 +86,7 @@ What do you see in the screen output? Can you identify which parameter is changi
 
 One way to detect this instability is to check the mass transfer rate and the timestep. If the mass transfer rate is high and the timestep becomes very small (on the order of seconds to minutes), it is an indication that unstable mass transfer has started.
 
-Use `b% s1% lg_mtransfer_rate` and `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Make a code to terminate the run when the timestep falls below 30 seconds, which is enough to capture the unstable mass transfer event, and print "Terminated due to unstable mass transfer" in the terminal. If the mass transfer was stable or there was no mass transfer, the run should end with the printout "Terminated due to core carbon depletion" in the terminal.
+Use `b% mtransfer_rate` and `b% s1% dt` (timestep in seconds) in `extras_binary_finish_step` hook in `run_binary_extras.f90`. Make a code to terminate the run when the timestep falls below 30 seconds, which is enough to capture the unstable mass transfer event, and print "Terminated due to unstable mass transfer" in the terminal. If the mass transfer was stable or there was no mass transfer, the run should end with the printout "Terminated due to core carbon depletion" in the terminal.
 
 <details>
   <summary>Hint</summary>
@@ -97,13 +97,14 @@ Use `b% s1% lg_mtransfer_rate` and `b% s1% dt` (timestep in seconds) in `extras_
   <summary>Solution</summary>
   
   ```fortran
+
          !!!!! TASK 2 block begins !!!
-         if (b% s1% dt < 30) then
-             write(*,*) '************************************************'
-             write(*,*) '*** Terminated due to unstable mass transfer ***'
-             write(*,*) '************************************************'
+         if ((abs(b% mtransfer_rate)/Msun*secyer > 1d-3) .and. (b% s1% dt < 3d6)) then
+             write(*,*) '*********************************************'
+             write(*,*) '****** Terminated at max MT rate limit ******'
+             write(*,*) '*********************************************'
              extras_binary_finish_step = terminate
-         end if   
+         end if
          !!!!! TASK 2 block ends !!!
 ```       
 </details>
