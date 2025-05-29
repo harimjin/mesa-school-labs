@@ -128,7 +128,6 @@ If there was no mass transfer, leave **Case** and **Stable** blank.
 
 As many students input values, a pattern will emerge in the initial orbital period-mass ratio diagram. What kind of patterns do you see? Why do you think such patterns arise? Discuss with your group members.
 
-
 ***
 **Bonus exercise:**  
 Can you print out which mass transfer cases a binary system undergoes throughout its evolution at the end of the run? Try to capture all the cases. For example, Case A mass transfer is generally followed by Case B mass transfer. In this case, we want to print out "Case A + B" at termination.
