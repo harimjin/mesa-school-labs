@@ -131,8 +131,7 @@ As many students input values, a pattern will emerge in the initial orbital peri
 
 ***
 **Bonus exercise:**  
-Can you print out which mass transfer cases a binary system undergoes throughout its evolution at the end of the run? Try to capture all the cases.  
-Ex) Case A mass transfer is generally followed by Case B mass transfer. In this case, we want to print out "Case A + B" at termination.
+Can you print out which mass transfer cases a binary system undergoes throughout its evolution at the end of the run? Try to capture all the cases. For example, Case A mass transfer is generally followed by Case B mass transfer. In this case, we want to print out "Case A + B" at termination.
 ***
 
 # Task 4 (optional): Visualizing the effect of binary evolution with TULIPS
